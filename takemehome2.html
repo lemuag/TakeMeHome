@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0D1117">
+<title>Detector de Destino</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:#0D1117;color:#E2E8F0;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:16px 16px 48px;gap:12px;
+}
+.wrap{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:12px}
+input[type=text]{
+  width:100%;background:#161B22;border:1px solid #30363D;border-radius:10px;
+  padding:12px 14px;color:#F0F6FC;font-size:15px;outline:none;-webkit-appearance:none;
+}
+input[type=text]::placeholder{color:#484F58}
+input[type=text]:focus{border-color:#388BFD}
+button{
+  background:#1F6FEB;border:none;border-radius:10px;padding:12px 16px;
+  color:#fff;font-size:14px;font-weight:500;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;width:100%;
+}
+button:active{opacity:.75}
+.btn-sec{background:#21262D;color:#CDD9E5}
+.btn-row{display:flex;gap:8px;width:100%}
+.btn-row button{flex:1}
+
+@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+#det{
+  width:190px;height:190px;border-radius:50%;flex-shrink:0;
+  animation:beat var(--pd,3s) ease-in-out infinite;
+  transition:background-color .22s ease;position:relative;
+}
+#det::after{
+  content:'';position:absolute;width:14px;height:14px;border-radius:50%;
+  background:rgba(255,255,255,0.45);top:50%;left:50%;transform:translate(-50%,-50%);
+}
+#badge{
+  width:100%;border-radius:12px;padding:12px 18px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:background .3s ease;background:#161B22;
+}
+#badge-txt{font-size:15px;font-weight:500;transition:color .3s}
+#badge-pct{font-size:13px;opacity:.75;transition:color .3s}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.card{background:#161B22;border-radius:10px;padding:10px 12px}
+.card-lbl{font-size:10px;color:#484F58;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.card-val{font-size:17px;font-weight:500;font-variant-numeric:tabular-nums;color:#F0F6FC}
+.card-full{grid-column:1/-1;text-align:center}
+.card-full .card-val{font-size:24px}
+.slider-wrap{width:100%;display:flex;flex-direction:column;gap:6px}
+.sl-hdr{display:flex;justify-content:space-between;align-items:center}
+.sl-lbl{font-size:12px;color:#8B949E}
+.sl-deg{font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;color:#F0F6FC}
+input[type=range]{width:100%;accent-color:#1F6FEB;cursor:pointer}
+.sl-marks{display:flex;justify-content:space-between;font-size:10px;color:#484F58}
+.msg{border-radius:10px;padding:10px 13px;width:100%;font-size:12px;line-height:1.6}
+.msg-warn{background:#271C0E;border:1px solid #6E4C1E;color:#D29922}
+.msg-err {background:#2D1215;border:1px solid #6E1119;color:#F85149}
+.msg-ok  {background:#0D1F12;border:1px solid #1A4A24;color:#3FB950}
+.msg-info{background:#0D1626;border:1px solid #1A3A5C;color:#58A6FF}
+.note{font-size:10px;color:#484F58;text-align:center;line-height:1.7;width:100%}
+.tabs{display:flex;gap:6px;width:100%;background:#161B22;border-radius:10px;padding:4px}
+.tab{flex:1;border:none;border-radius:7px;padding:8px;font-size:13px;
+  background:transparent;color:#8B949E;cursor:pointer;transition:all .2s}
+.tab.on{background:#21262D;color:#E2E8F0;font-weight:500}
+#sec-real,#sec-sim{width:100%;display:flex;flex-direction:column;gap:10px}
+.status-row{display:flex;gap:6px;width:100%}
+.status-pill{flex:1;border-radius:8px;padding:7px 10px;font-size:11px;
+  background:#161B22;border:1px solid #30363D;color:#484F58;text-align:center;
+  transition:all .3s}
+.status-pill.on{background:#0D1F12;border-color:#1A4A24;color:#3FB950}
+.status-pill.err{background:#2D1215;border-color:#6E1119;color:#F85149}
+.status-pill.warn{background:#1A1200;border-color:#4A3000;color:#D29922}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div style="text-align:center;padding-top:2px">
+  <p style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#484F58">detector de destino</p>
+  <p style="font-size:20px;font-weight:500;color:#F0F6FC;margin-top:2px">¿Dónde voy?</p>
+</div>
+
+<!-- Búsqueda -->
+<div style="width:100%;display:flex;flex-direction:column;gap:8px">
+  <div class="btn-row">
+    <input type="text" id="addr" placeholder="Introduce una dirección..." autocomplete="off" autocorrect="off" style="width:auto">
+    <button onclick="geocode()" style="width:auto;padding:12px 18px">Buscar</button>
+  </div>
+  <div id="addr-info" style="font-size:11px;color:#484F58;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:16px"></div>
+</div>
+
+<!-- Círculo detector -->
+<div id="det" style="background:#21262D"></div>
+
+<!-- Badge estado -->
+<div id="badge">
+  <span id="badge-ico" style="font-size:18px">○</span>
+  <span id="badge-txt" style="color:#8B949E">Sin destino</span>
+  <span id="badge-pct" style="color:#8B949E"></span>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab on" id="tab-real" onclick="setMode('real')">📡 Móvil real</button>
+  <button class="tab"    id="tab-sim"  onclick="setMode('sim')">🖥 Simulación</button>
+</div>
+
+<!-- SECCIÓN REAL -->
+<div id="sec-real">
+  <!-- Estado sensores -->
+  <div class="status-row">
+    <div class="status-pill" id="pill-gps">📍 GPS —</div>
+    <div class="status-pill" id="pill-compass">🧭 Brújula —</div>
+  </div>
+
+  <!-- Botón principal -->
+  <button id="startBtn" onclick="activateReal()">📍 Activar GPS y brújula</button>
+
+  <!-- Mensajes dinámicos -->
+  <div id="msg-gps"     class="msg msg-info" style="display:none"></div>
+  <div id="msg-compass" class="msg msg-info" style="display:none"></div>
+
+  <!-- Datos -->
+  <div class="cards">
+    <div class="card"><div class="card-lbl">Rumbo brújula</div><div class="card-val" id="r-head">—</div></div>
+    <div class="card"><div class="card-lbl">Rumbo destino</div><div class="card-val" id="r-tgt">—</div></div>
+    <div class="card card-full" id="dist-card" style="display:none">
+      <div class="card-lbl">Distancia al destino</div>
+      <div class="card-val" id="dist-val">—</div>
+    </div>
+  </div>
+
+  <button class="btn-sec" id="snd-r" onclick="toggleSound()">🔇 Activar sonido</button>
+</div>
+
+<!-- SECCIÓN SIM -->
+<div id="sec-sim" style="display:none">
+  <div class="slider-wrap">
+    <div class="sl-hdr">
+      <span class="sl-lbl">↻ Gira el teléfono virtual</span>
+      <span class="sl-deg" id="s-deg">0° N</span>
+    </div>
+    <input type="range" id="sl" min="0" max="359" value="0" step="1" oninput="slMov(this.value)">
+    <div class="sl-marks">
+      <span>N 0°</span><span>E 90°</span><span>S 180°</span><span>O 270°</span><span>N 360°</span>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-lbl">Rumbo virtual</div><div class="card-val" id="s-head">0°</div></div>
+    <div class="card"><div class="card-lbl">Rumbo destino</div><div class="card-val" id="s-tgt">—</div></div>
+  </div>
+  <button class="btn-sec" id="snd-s" onclick="toggleSound()">🔇 Activar sonido</button>
+</div>
+
+<p class="note">
+  En Chrome/Brave abre el archivo desde el menú <strong>⋮ → Compartir → Abrir en Chrome</strong><br>
+  o súbelo a GitHub Pages para HTTPS completo.
+</p>
+
+</div>
+<script>
+// ── Estado ───────────────────────────────────────────────────────────────────
+let tLat=null,tLon=null,tBearing=null;
+let uHead=0,pos=null,posSource='';
+let actx=null,sndOn=false,beepTO=null;
+let mode='real',geoWatch=null;
+
+// ── Tablas ───────────────────────────────────────────────────────────────────
+const DIRS=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'];
+const PENTA=[262,294,330,392,440,523,587,659,784];
+const gDir=d=>DIRS[Math.round(d/22.5)%16];
+const fmtD=m=>m<1000?`${Math.round(m)} m`:`${(m/1000).toFixed(1)} km`;
+
+// ── Colores ──────────────────────────────────────────────────────────────────
+const RED=[235,18,18],AMB=[230,150,0],GRN=[15,210,50];
+function lRGB(a,b,t){return[a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1]),a[2]+t*(b[2]-a[2])].map(Math.round);}
+function getColor(h){return`rgb(${h>0.55?lRGB(AMB,GRN,(h-0.55)/0.45):lRGB(RED,AMB,h/0.55)})`;}
+
+// ── Haversine ─────────────────────────────────────────────────────────────────
+function hBearing(la1,lo1,la2,lo2){
+  const R=Math.PI/180,dl=(lo2-lo1)*R,f1=la1*R,f2=la2*R;
+  return((Math.atan2(Math.sin(dl)*Math.cos(f2),Math.cos(f1)*Math.sin(f2)-Math.sin(f1)*Math.cos(f2)*Math.cos(dl))*180/Math.PI)+360)%360;
+}
+function hDist(la1,lo1,la2,lo2){
+  const r=Math.PI/180,a=Math.sin((la2-la1)*r/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin((lo2-lo1)*r/2)**2;
+  return 6371000*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// ── Hotness ───────────────────────────────────────────────────────────────────
+function getH(){
+  if(tBearing===null)return null;
+  return Math.max(0,Math.min(1,1-Math.abs(((uHead-tBearing+540)%360)-180)/180));
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+function upd(){
+  const h=getH();
+  const det=document.getElementById('det');
+  const badge=document.getElementById('badge');
+  const tStr=tBearing!==null?`${Math.round(tBearing)}° ${gDir(tBearing)}`:'—';
+  document.getElementById('r-head').textContent=`${Math.round(uHead)}°`;
+  document.getElementById('r-tgt').textContent=tStr;
+  document.getElementById('s-head').textContent=`${Math.round(uHead)}°`;
+  document.getElementById('s-tgt').textContent=tStr;
+
+  if(h===null){
+    det.style.backgroundColor='#21262D';
+    det.style.setProperty('--pd','3s');
+    document.getElementById('badge-txt').textContent='Sin destino';
+    document.getElementById('badge-pct').textContent='';
+    document.getElementById('badge-ico').textContent='○';
+    ['badge-txt','badge-pct','badge-ico'].forEach(id=>document.getElementById(id).style.color='#8B949E');
+    badge.style.background='#161B22';
+    return;
+  }
+  det.style.backgroundColor=getColor(h);
+  det.style.setProperty('--pd',`${Math.round(300+(1-h)*1700)}ms`);
+  document.getElementById('badge-pct').textContent=`${Math.round(h*100)}%`;
+  let sbg,stxt,sico,smsg;
+  if(h>0.87){sbg='rgba(56,139,53,.2)';stxt='#3FB950';sico='✓';smsg='Dirección correcta';}
+  else if(h>0.55){sbg='rgba(187,128,9,.2)';stxt='#D29922';sico='↔';smsg='Ajusta un poco';}
+  else{sbg='rgba(248,81,73,.2)';stxt='#F85149';sico='↻';smsg='Gira el teléfono';}
+  badge.style.background=sbg;
+  ['badge-txt','badge-pct','badge-ico'].forEach(id=>document.getElementById(id).style.color=stxt);
+  document.getElementById('badge-txt').textContent=smsg;
+  document.getElementById('badge-ico').textContent=sico;
+  if(sndOn)scheduleBeep();
+}
+
+function setMsg(id,type,text){
+  const el=document.getElementById(id);
+  if(!text){el.style.display='none';return;}
+  el.className=`msg msg-${type}`;el.innerHTML=text;el.style.display='';
+}
+function setPill(id,state,text){
+  const el=document.getElementById(id);
+  el.className=`status-pill${state?' '+state:''}`;el.textContent=text;
+}
+
+// ── Geocodificación ───────────────────────────────────────────────────────────
+async function geocode(){
+  const a=document.getElementById('addr').value.trim();
+  if(!a)return;
+  document.getElementById('addr-info').textContent='Buscando...';
+  try{
+    const r=await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a)}&limit=1`,
+      {headers:{'Accept-Language':'es','User-Agent':'DetectorDestino/1.0'},signal:AbortSignal.timeout(8000)}
+    );
+    const d=await r.json();
+    if(!d.length){document.getElementById('addr-info').textContent='⚠️ Dirección no encontrada';}
+    else{
+      tLat=parseFloat(d[0].lat);tLon=parseFloat(d[0].lon);
+      document.getElementById('addr-info').textContent='📍 '+d[0].display_name.substring(0,55);
+      recalcBearing();upd();
+    }
+  }catch{
+    // Sin red: bearing hash del texto
+    let b=0;for(const c of a)b=(b*31+c.charCodeAt(0))%360;
+    tBearing=b%360;tLat=null;tLon=null;
+    document.getElementById('addr-info').textContent=`⚠️ Sin red — destino simulado rumbo ${tBearing}° ${gDir(tBearing)}`;
+    upd();
+  }
+}
+document.getElementById('addr').addEventListener('keydown',e=>{if(e.key==='Enter')geocode();});
+
+function recalcBearing(){
+  if(tLat===null)return;
+  const la=pos?pos.lat:40.4168,lo=pos?pos.lon:-3.7038; // fallback Madrid
+  tBearing=hBearing(la,lo,tLat,tLon);
+  if(pos){
+    document.getElementById('dist-val').textContent=fmtD(hDist(pos.lat,pos.lon,tLat,tLon));
+    document.getElementById('dist-card').style.display='';
+  }
+}
+
+function setPos(la,lo,src){
+  pos={lat:la,lon:lo};posSource=src;
+  recalcBearing();upd();
+}
+
+// ── GPS ───────────────────────────────────────────────────────────────────────
+function startGPS(){
+  if(!navigator.geolocation){
+    setPill('pill-gps','err','📍 GPS no disponible');
+    setMsg('msg-gps','warn','Tu navegador no soporta geolocalización. Se usará ubicación por IP.');
+    tryIPGeo();return;
+  }
+  setPill('pill-gps','warn','📍 GPS solicitando...');
+  geoWatch=navigator.geolocation.watchPosition(
+    p=>{
+      setPos(p.coords.latitude,p.coords.longitude,'gps');
+      setPill('pill-gps','on',`📍 GPS ±${Math.round(p.coords.accuracy)}m`);
+      setMsg('msg-gps',null,'');
+    },
+    e=>{
+      let advice='';
+      if(e.code===1){
+        // Permiso denegado — intentar por IP
+        setPill('pill-gps','err','📍 GPS denegado');
+        if(location.protocol==='file:'){
+          advice='Chrome y Brave <strong>bloquean el GPS en archivos locales</strong>. '+
+            'Se usará ubicación aproximada por IP como alternativa automática.';
+        }else{
+          advice='Permiso de ubicación denegado. Revisa los permisos del sitio en el navegador. '+
+            'Se usará ubicación aproximada por IP.';
+        }
+        setMsg('msg-gps','warn',advice);
+        tryIPGeo();
+      }else if(e.code===2){
+        setPill('pill-gps','err','📍 GPS sin señal');
+        setMsg('msg-gps','warn','Sin señal GPS. Sal al exterior o activa el GPS del móvil en Ajustes. Intentando por IP...');
+        tryIPGeo();
+      }else{
+        setPill('pill-gps','warn','📍 GPS lento');
+        setMsg('msg-gps','info','GPS tardando en responder. Intentando por IP...');
+        tryIPGeo();
+      }
+    },
+    {enableHighAccuracy:true,maximumAge:5000,timeout:12000}
+  );
+}
+
+// ── Geolocalización por IP (fallback sin permisos) ────────────────────────────
+async function tryIPGeo(){
+  setMsg('msg-gps','info',(document.getElementById('msg-gps').innerHTML||'')+
+    '<br>🌐 Obteniendo ubicación aproximada por IP...');
+  try{
+    // ip-api.com: gratuito, sin API key, funciona desde file://
+    const r=await fetch('http://ip-api.com/json/?fields=status,lat,lon,city,regionName',
+      {signal:AbortSignal.timeout(6000)});
+    const d=await r.json();
+    if(d.status==='success'){
+      setPos(d.lat,d.lon,'ip');
+      setPill('pill-gps','warn',`🌐 IP ~${d.city}`);
+      setMsg('msg-gps','warn',
+        `📍 Ubicación por IP: <strong>${d.city}, ${d.regionName}</strong> (precisión ~ciudad, suficiente para orientación).<br>`+
+        `Para mayor precisión, sirve el archivo desde HTTPS.`);
+    }else{
+      setMsg('msg-gps','err','No se pudo obtener la ubicación por IP. Activa la pestaña Simulación o sirve el archivo desde HTTPS.');
+    }
+  }catch(err){
+    setMsg('msg-gps','err','GPS bloqueado y sin acceso a internet para ubicación por IP.<br>Usa la pestaña <strong>Simulación</strong>.');
+  }
+}
+
+// ── Brújula ───────────────────────────────────────────────────────────────────
+function startCompass(){
+  const oriH=e=>{
+    let h=null;
+    if(e.webkitCompassHeading!=null) h=e.webkitCompassHeading;        // iOS
+    else if(e.alpha!=null)           h=(360-e.alpha)%360;              // Android
+    if(h!==null){
+      uHead=h;
+      setPill('pill-compass','on',`🧭 ${Math.round(h)}° ${gDir(h)}`);
+      upd();
+    }
+  };
+  // iOS 13+: requestPermission debe llamarse sincrónicamente desde el click
+  if(typeof DeviceOrientationEvent!=='undefined'&&
+     typeof DeviceOrientationEvent.requestPermission==='function'){
+    DeviceOrientationEvent.requestPermission()
+      .then(perm=>{
+        if(perm==='granted'){
+          window.addEventListener('deviceorientationabsolute',oriH,true);
+          window.addEventListener('deviceorientation',oriH,true);
+          setPill('pill-compass','warn','🧭 Esperando...');
+          setMsg('msg-compass',null,'');
+        }else{
+          setPill('pill-compass','err','🧭 Denegada');
+          setMsg('msg-compass','warn','Permiso de brújula denegado.<br>Ve a <strong>Ajustes → Safari → Privacidad → Movimiento y orientación</strong> y actívalo.');
+        }
+      })
+      .catch(err=>{
+        setPill('pill-compass','err','🧭 Error');
+        setMsg('msg-compass','err',
+          'Error al pedir permiso de brújula.<br>'+
+          (location.protocol!=='https:'?'La brújula en iOS requiere <strong>HTTPS</strong>. Sube el archivo a GitHub Pages.':'Error: '+err.message));
+      });
+  }else{
+    // Android / Chrome — sin requestPermission, añadir listeners directamente
+    window.addEventListener('deviceorientationabsolute',oriH,true);
+    window.addEventListener('deviceorientation',oriH,true);
+    setPill('pill-compass','warn','🧭 Esperando...');
+    setMsg('msg-compass',null,'');
+    // Si en 4s no hay datos, avisar
+    setTimeout(()=>{
+      if(document.getElementById('pill-compass').classList.contains('warn')){
+        setPill('pill-compass','err','🧭 Sin datos');
+        setMsg('msg-compass','warn','No se reciben datos de orientación. Comprueba que tu dispositivo tiene brújula y el sensor está activo.');
+      }
+    },4000);
+  }
+}
+
+// ── Activar (botón principal) ─────────────────────────────────────────────────
+function activateReal(){
+  const btn=document.getElementById('startBtn');
+  btn.disabled=true;btn.textContent='Activando...';btn.style.background='#238636';
+  startCompass(); // primero (iOS requiere que sea síncrono desde el click)
+  startGPS();     // lanza watchPosition (asíncrono)
+  btn.textContent='✓ Sensores activados';
+}
+
+// ── Modo ──────────────────────────────────────────────────────────────────────
+function setMode(m){
+  mode=m;
+  document.getElementById('sec-real').style.display=m==='real'?'flex':'none';
+  document.getElementById('sec-sim').style.display=m==='sim'?'flex':'none';
+  document.getElementById('tab-real').className='tab'+(m==='real'?' on':'');
+  document.getElementById('tab-sim').className='tab'+(m==='sim'?' on':'');
+  upd();
+}
+
+// ── Simulación ────────────────────────────────────────────────────────────────
+function slMov(v){
+  uHead=parseInt(v);
+  document.getElementById('s-deg').textContent=`${uHead}° ${gDir(uHead)}`;
+  upd();
+}
+
+// ── Sonido ────────────────────────────────────────────────────────────────────
+function playNote(freq,delay,vol,dur){
+  if(!actx)return;
+  const t=actx.currentTime+delay;
+  const o1=actx.createOscillator(),o2=actx.createOscillator(),g=actx.createGain();
+  o1.connect(g);o2.connect(g);g.connect(actx.destination);
+  o1.type='sine';o2.type='sine';
+  o1.frequency.setValueAtTime(freq,t);o2.frequency.setValueAtTime(freq*2,t);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o1.start(t);o2.start(t);o1.stop(t+dur+0.02);o2.stop(t+dur+0.02);
+}
+function playMusicalBeep(h){
+  if(!actx||!sndOn)return;
+  if(actx.state==='suspended')actx.resume();
+  const freq=PENTA[Math.min(Math.floor(h*7),7)];
+  const vol=0.05+h*0.06,dur=0.12+h*0.28;
+  if(h>0.88){playNote(freq,0,vol,dur);playNote(freq*1.25,0.14,vol*0.8,dur*0.8);}
+  else playNote(freq,0,vol,dur);
+}
+function scheduleBeep(){
+  clearTimeout(beepTO);
+  if(!sndOn||!actx||tBearing===null)return;
+  const h=getH();
+  if(h===null||h<0.04){beepTO=setTimeout(scheduleBeep,3000);return;}
+  playMusicalBeep(h);
+  beepTO=setTimeout(scheduleBeep,Math.round(120+(1-h)*1880));
+}
+function toggleSound(){
+  if(!actx){
+    try{actx=new(window.AudioContext||window.webkitAudioContext)();}
+    catch{alert('Audio no soportado');return;}
+  }
+  if(actx.state==='suspended')actx.resume();
+  sndOn=!sndOn;
+  const lbl=sndOn?'🔊 Silenciar sonido':'🔇 Activar sonido';
+  document.getElementById('snd-r').textContent=lbl;
+  document.getElementById('snd-s').textContent=lbl;
+  if(sndOn)scheduleBeep();else clearTimeout(beepTO);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+setMode('real');upd();
+</script>
+</body>
+</html>

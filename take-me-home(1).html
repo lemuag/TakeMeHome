@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0D1117">
+<title>Take Me Home</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:#0D1117;color:#E2E8F0;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:20px 16px 52px;gap:13px;
+}
+.wrap{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:13px}
+
+/* ── Search ── */
+.search-row{display:flex;gap:8px;width:100%}
+input[type=text]{
+  flex:1;background:#161B22;border:1px solid #30363D;border-radius:12px;
+  padding:12px 14px;color:#F0F6FC;font-size:15px;outline:none;-webkit-appearance:none;
+}
+input[type=text]::placeholder{color:#484F58}
+input[type=text]:focus{border-color:#388BFD}
+.search-btn{
+  width:48px;height:48px;flex-shrink:0;border-radius:12px;border:none;
+  background:#1F6FEB;color:#fff;font-size:20px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.search-btn:active{opacity:.75}
+
+/* ── Presets ── */
+.presets-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.presets-scroll::-webkit-scrollbar{display:none}
+.presets-row{display:flex;gap:7px;width:max-content;min-width:100%;padding-bottom:2px}
+.chip{
+  display:flex;align-items:center;gap:3px;
+  background:#161B22;border:1px solid #30363D;border-radius:20px;
+  padding:6px 10px;white-space:nowrap;cursor:pointer;font-size:13px;color:#CDD9E5;
+  -webkit-tap-highlight-color:transparent;transition:border-color .2s;
+}
+.chip:active{background:#21262D;border-color:#484F58}
+.chip-del{
+  background:none;border:none;color:#484F58;font-size:15px;
+  cursor:pointer;padding:0 0 0 3px;line-height:1;
+}
+.chip-add{
+  background:transparent;border:1px dashed #30363D;border-radius:20px;
+  padding:6px 12px;color:#484F58;font-size:13px;cursor:pointer;
+  white-space:nowrap;-webkit-tap-highlight-color:transparent;-webkit-appearance:none;
+}
+.chip-add:active{border-color:#58A6FF;color:#58A6FF}
+.addr-info{font-size:11px;color:#484F58;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:16px}
+
+/* ── Circle ── */
+@keyframes beat{
+  0%,100%{transform:scale(1);   box-shadow:0 0 0 3px var(--ring,rgba(72,79,88,.35))}
+  50%    {transform:scale(1.07);box-shadow:0 0 0 14px rgba(0,0,0,0)}
+}
+#det{
+  width:190px;height:190px;border-radius:50%;flex-shrink:0;
+  animation:beat var(--pd,3s) ease-in-out infinite;
+  transition:background-color .22s ease,border-color .22s ease;
+  position:relative;border:2px solid #30363D;
+  background:#21262D;
+}
+#det::after{
+  content:'';position:absolute;width:14px;height:14px;border-radius:50%;
+  background:rgba(255,255,255,0.45);top:50%;left:50%;transform:translate(-50%,-50%);
+}
+
+/* ── Badge ── */
+#badge{
+  width:100%;border-radius:12px;padding:12px 18px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:background .3s;background:#161B22;
+}
+#badge-txt{font-size:15px;font-weight:500;transition:color .3s}
+#badge-pct{font-size:13px;opacity:.75;transition:color .3s}
+
+/* ── FABs ── */
+.fabs-row{display:flex;gap:20px;justify-content:center;width:100%}
+.fab{
+  width:58px;height:58px;border-radius:50%;border:none;font-size:26px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  background:#1F6FEB;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:transform .1s,background .3s;flex-shrink:0;
+}
+.fab:active{transform:scale(.88)}
+.fab.sec {background:#21262D}
+.fab.ok  {background:#238636}
+
+/* ── Cards ── */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.card{background:#161B22;border-radius:10px;padding:10px 12px}
+.card-lbl{font-size:10px;color:#484F58;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.card-val{font-size:17px;font-weight:500;font-variant-numeric:tabular-nums;color:#F0F6FC}
+.card-full{grid-column:1/-1;text-align:center}
+.card-full .card-val{font-size:24px}
+
+/* ── Slider ── */
+.sl-wrap{width:100%;display:flex;flex-direction:column;gap:6px}
+.sl-hdr{display:flex;justify-content:space-between;align-items:center}
+.sl-lbl{font-size:12px;color:#8B949E}
+.sl-deg{font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;color:#F0F6FC}
+input[type=range]{width:100%;accent-color:#1F6FEB;cursor:pointer}
+.sl-marks{display:flex;justify-content:space-between;font-size:10px;color:#484F58}
+
+/* ── Alerts ── */
+.msg{border-radius:10px;padding:10px 13px;width:100%;font-size:12px;line-height:1.7;display:none}
+.msg-warn{background:#271C0E;border:1px solid #6E4C1E;color:#D29922}
+.msg-err {background:#2D1215;border:1px solid #6E1119;color:#F85149}
+.msg-info{background:#0D1626;border:1px solid #1A3A5C;color:#58A6FF}
+
+/* ── Pills ── */
+.pills{display:flex;gap:6px;width:100%}
+.pill{flex:1;border-radius:8px;padding:7px 8px;font-size:11px;
+  background:#161B22;border:1px solid #30363D;color:#484F58;text-align:center;transition:all .3s}
+.pill.on  {background:#0D1F12;border-color:#1A4A24;color:#3FB950}
+.pill.err {background:#2D1215;border-color:#6E1119;color:#F85149}
+.pill.warn{background:#1A1200;border-color:#4A3000;color:#D29922}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:6px;width:100%;background:#161B22;border-radius:10px;padding:4px}
+.tab{flex:1;border:none;border-radius:7px;padding:8px;font-size:13px;
+  background:transparent;color:#8B949E;cursor:pointer;transition:all .2s;
+  -webkit-tap-highlight-color:transparent}
+.tab.on{background:#21262D;color:#E2E8F0;font-weight:500}
+
+#sec-real,#sec-sim{width:100%;display:flex;flex-direction:column;gap:10px}
+.note{font-size:10px;color:#484F58;text-align:center;line-height:1.7;width:100%}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- Search + presets -->
+<div style="width:100%;display:flex;flex-direction:column;gap:8px">
+  <div class="search-row">
+    <input type="text" id="addr" placeholder="¿A dónde vamos?" autocomplete="off" autocorrect="off">
+    <button class="search-btn" onclick="geocode()" title="Buscar">🔍</button>
+  </div>
+  <div class="presets-scroll">
+    <div class="presets-row" id="presets-row"></div>
+  </div>
+  <div class="addr-info" id="addr-info"></div>
+</div>
+
+<!-- Círculo detector -->
+<div id="det"></div>
+
+<!-- Badge -->
+<div id="badge">
+  <span id="b-ico" style="font-size:18px">○</span>
+  <span id="b-txt" style="color:#8B949E">Sin destino</span>
+  <span id="b-pct" style="color:#8B949E"></span>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab on" id="tab-real" onclick="setMode('real')">📡 Móvil real</button>
+  <button class="tab"    id="tab-sim"  onclick="setMode('sim')">🖥 Simulación</button>
+</div>
+
+<!-- REAL -->
+<div id="sec-real">
+  <div class="pills">
+    <div class="pill" id="pill-gps">📍 GPS —</div>
+    <div class="pill" id="pill-cmp">🧭 Brújula —</div>
+  </div>
+  <div class="fabs-row">
+    <button class="fab" id="btn-act" onclick="activateReal()" title="Activar GPS y brújula">📍</button>
+    <button class="fab sec" id="snd-r" onclick="toggleSound()" title="Sonido">🔇</button>
+  </div>
+  <div id="msg-gps" class="msg msg-warn"></div>
+  <div id="msg-cmp" class="msg msg-warn"></div>
+  <div class="cards">
+    <div class="card"><div class="card-lbl">Rumbo brújula</div><div class="card-val" id="r-head">—</div></div>
+    <div class="card"><div class="card-lbl">Rumbo destino</div><div class="card-val" id="r-tgt">—</div></div>
+    <div class="card card-full" id="dist-card" style="display:none">
+      <div class="card-lbl">Distancia</div>
+      <div class="card-val" id="dist-val">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- SIM -->
+<div id="sec-sim" style="display:none">
+  <div class="sl-wrap">
+    <div class="sl-hdr">
+      <span class="sl-lbl">↻ Gira el teléfono virtual</span>
+      <span class="sl-deg" id="s-deg">0° N</span>
+    </div>
+    <input type="range" id="sl" min="0" max="359" value="0" step="1" oninput="slMov(this.value)">
+    <div class="sl-marks"><span>N</span><span>E</span><span>S</span><span>O</span><span>N</span></div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-lbl">Rumbo virtual</div><div class="card-val" id="s-head">0°</div></div>
+    <div class="card"><div class="card-lbl">Rumbo destino</div><div class="card-val" id="s-tgt">—</div></div>
+  </div>
+  <div class="fabs-row">
+    <button class="fab sec" id="snd-s" onclick="toggleSound()" title="Sonido">🔇</button>
+  </div>
+</div>
+
+<p class="note">
+  Brave: toca 🦁 → desactiva protección de huella digital → recarga.<br>
+  GPS completo: sirve el archivo desde HTTPS (GitHub Pages, Google Drive).
+</p>
+
+</div><!-- /wrap -->
+<script>
+// ── Estado ───────────────────────────────────────────────────────────────────
+let tLat=null,tLon=null,tBearing=null;
+let uHead=0,pos=null,geoWatch=null;
+let actx=null,sndOn=false,beepTO=null;
+let mode='real';
+
+// ── Constantes ────────────────────────────────────────────────────────────────
+const DIRS=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'];
+const PENTA=[262,294,330,392,440,523,587,659,784];
+const PICNS=['🏠','💼','⭐','🏥','🏫','🏪','🎯','🍕','🎵','🌳'];
+const gDir=d=>DIRS[Math.round(d/22.5)%16];
+const fmtD=m=>m<1000?`${Math.round(m)} m`:`${(m/1000).toFixed(1)} km`;
+
+// ── Colores ───────────────────────────────────────────────────────────────────
+const RED=[235,18,18],AMB=[230,150,0],GRN=[15,210,50];
+function lRGB(a,b,t){return[a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1]),a[2]+t*(b[2]-a[2])].map(Math.round);}
+function getRGB(h){return h>0.55?lRGB(AMB,GRN,(h-0.55)/0.45):lRGB(RED,AMB,h/0.55);}
+function getColor(h){const c=getRGB(h);return{str:`rgb(${c})`,rgb:c};}
+
+// ── Haversine ─────────────────────────────────────────────────────────────────
+function hBear(la1,lo1,la2,lo2){
+  const R=Math.PI/180,dl=(lo2-lo1)*R,f1=la1*R,f2=la2*R;
+  return((Math.atan2(Math.sin(dl)*Math.cos(f2),Math.cos(f1)*Math.sin(f2)-Math.sin(f1)*Math.cos(f2)*Math.cos(dl))*180/Math.PI)+360)%360;
+}
+function hDist(la1,lo1,la2,lo2){
+  const r=Math.PI/180,a=Math.sin((la2-la1)*r/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin((lo2-lo1)*r/2)**2;
+  return 6371000*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function getH(){
+  if(tBearing===null)return null;
+  return Math.max(0,Math.min(1,1-Math.abs(((uHead-tBearing+540)%360)-180)/180));
+}
+
+// ── UI update ─────────────────────────────────────────────────────────────────
+function upd(){
+  const h=getH();
+  const det=document.getElementById('det');
+  const badge=document.getElementById('badge');
+  const tStr=tBearing!==null?`${Math.round(tBearing)}° ${gDir(tBearing)}`:'—';
+  document.getElementById('r-head').textContent=`${Math.round(uHead)}°`;
+  document.getElementById('r-tgt').textContent=tStr;
+  document.getElementById('s-head').textContent=`${Math.round(uHead)}°`;
+  document.getElementById('s-tgt').textContent=tStr;
+
+  if(h===null){
+    det.style.backgroundColor='#21262D';
+    det.style.border='2px solid #30363D';
+    det.style.setProperty('--pd','3s');
+    det.style.setProperty('--ring','rgba(72,79,88,.3)');
+    document.getElementById('b-txt').textContent='Sin destino';
+    document.getElementById('b-pct').textContent='';
+    document.getElementById('b-ico').textContent='○';
+    ['b-txt','b-pct','b-ico'].forEach(id=>document.getElementById(id).style.color='#8B949E');
+    badge.style.background='#161B22';
+    return;
+  }
+
+  const {str,rgb}=getColor(h);
+  // Borde ligeramente más brillante que el relleno
+  const brd=rgb.map(v=>Math.min(255,v+45));
+  det.style.backgroundColor=str;
+  det.style.border=`2px solid rgba(${brd},0.8)`;
+  // Ring del pulso = color del círculo que se expande y desvanece
+  det.style.setProperty('--ring',`rgba(${rgb},.6)`);
+  det.style.setProperty('--pd',`${Math.round(280+(1-h)*1720)}ms`);
+  document.getElementById('b-pct').textContent=`${Math.round(h*100)}%`;
+
+  let sbg,stxt,sico,smsg;
+  if(h>0.87)     {sbg='rgba(56,139,53,.2)'; stxt='#3FB950';sico='✓';smsg='Dirección correcta';}
+  else if(h>0.55){sbg='rgba(187,128,9,.2)'; stxt='#D29922';sico='↔';smsg='Ajusta un poco';}
+  else           {sbg='rgba(248,81,73,.2)';  stxt='#F85149';sico='↻';smsg='Gira el teléfono';}
+  badge.style.background=sbg;
+  ['b-txt','b-pct','b-ico'].forEach(id=>document.getElementById(id).style.color=stxt);
+  document.getElementById('b-txt').textContent=smsg;
+  document.getElementById('b-ico').textContent=sico;
+  if(sndOn)scheduleBeep();
+}
+
+function setMsg(id,type,html){const el=document.getElementById(id);if(!html){el.style.display='none';return;}el.className=`msg msg-${type}`;el.innerHTML=html;el.style.display='';}
+function setPill(id,cls,txt){const el=document.getElementById(id);el.className=`pill${cls?' '+cls:''}`;el.textContent=txt;}
+
+// ── Presets ───────────────────────────────────────────────────────────────────
+function loadP(){try{return JSON.parse(localStorage.getItem('tmh_p')||'[]');}catch{return[];}}
+function saveP(a){try{localStorage.setItem('tmh_p',JSON.stringify(a));}catch{}}
+
+function renderPresets(){
+  const arr=loadP(),row=document.getElementById('presets-row');
+  row.innerHTML='';
+  arr.forEach((p,i)=>{
+    const chip=document.createElement('div');chip.className='chip';
+    const sp=document.createElement('span');sp.textContent=`${p.icon} ${p.name}`;sp.onclick=()=>usePreset(i);
+    const dl=document.createElement('button');dl.className='chip-del';dl.textContent='×';
+    dl.onclick=e=>{e.stopPropagation();delPreset(i);};
+    chip.appendChild(sp);chip.appendChild(dl);row.appendChild(chip);
+  });
+  const add=document.createElement('button');add.className='chip-add';
+  add.textContent='＋ Guardar destino';add.onclick=addPreset;row.appendChild(add);
+}
+
+function usePreset(i){
+  const p=loadP()[i];
+  if(!p.lat){alert('Destino sin coordenadas. Búscalo primero.');return;}
+  tLat=p.lat;tLon=p.lon;
+  document.getElementById('addr').value=p.name;
+  document.getElementById('addr-info').textContent='📍 '+p.display;
+  recalc();upd();
+}
+function addPreset(){
+  if(!tLat){alert('Busca una dirección primero para poder guardarla.');return;}
+  const name=prompt('Nombre del destino (ej: Casa, Trabajo):','');
+  if(!name||!name.trim())return;
+  const arr=loadP();
+  arr.push({name:name.trim(),icon:PICNS[arr.length%PICNS.length],lat:tLat,lon:tLon,
+    display:document.getElementById('addr-info').textContent.replace('📍 ','')});
+  saveP(arr);renderPresets();
+}
+function delPreset(i){
+  if(!confirm('¿Eliminar este destino guardado?'))return;
+  const arr=loadP();arr.splice(i,1);saveP(arr);renderPresets();
+}
+
+// ── Geocodificación ───────────────────────────────────────────────────────────
+async function geocode(){
+  const a=document.getElementById('addr').value.trim();if(!a)return;
+  document.getElementById('addr-info').textContent='Buscando...';
+  try{
+    const r=await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(a)}&limit=1`,
+      {headers:{'Accept-Language':'es','User-Agent':'TakeMeHome/1.0'},signal:AbortSignal.timeout(8000)}
+    );
+    const d=await r.json();
+    if(!d.length){document.getElementById('addr-info').textContent='⚠️ No encontrado';}
+    else{
+      tLat=parseFloat(d[0].lat);tLon=parseFloat(d[0].lon);
+      document.getElementById('addr-info').textContent='📍 '+d[0].display_name.substring(0,60);
+      recalc();upd();
+    }
+  }catch{
+    let b=0;for(const c of a)b=(b*31+c.charCodeAt(0))%360;
+    tBearing=b%360;tLat=null;tLon=null;
+    document.getElementById('addr-info').textContent=`⚠️ Sin red — simulado: rumbo ${tBearing}° ${gDir(tBearing)}`;
+    upd();
+  }
+}
+document.getElementById('addr').addEventListener('keydown',e=>{if(e.key==='Enter')geocode();});
+
+function recalc(){
+  if(!tLat)return;
+  const la=pos?pos.lat:40.4168,lo=pos?pos.lon:-3.7038;
+  tBearing=hBear(la,lo,tLat,tLon);
+  if(pos){
+    document.getElementById('dist-val').textContent=fmtD(hDist(pos.lat,pos.lon,tLat,tLon));
+    document.getElementById('dist-card').style.display='';
+  }
+}
+function setPos(la,lo){pos={lat:la,lon:lo};recalc();upd();}
+
+// ── GPS ───────────────────────────────────────────────────────────────────────
+function startGPS(){
+  if(!navigator.geolocation){setPill('pill-gps','err','📍 No soportado');tryIPGeo();return;}
+  setPill('pill-gps','warn','📍 Solicitando...');
+  geoWatch=navigator.geolocation.watchPosition(
+    p=>{
+      setPos(p.coords.latitude,p.coords.longitude);
+      setPill('pill-gps','on',`📍 ±${Math.round(p.coords.accuracy)}m`);
+      setMsg('msg-gps',null,'');
+    },
+    e=>{
+      setPill('pill-gps','err','📍 Denegado');
+      const why=location.protocol==='file:'
+        ?'Chrome y Brave bloquean GPS en archivos locales (file://). Usando ubicación por IP…'
+        :'Permiso denegado. Comprueba permisos del sitio en el navegador. Usando ubicación por IP…';
+      setMsg('msg-gps','warn',why);
+      tryIPGeo();
+    },
+    {enableHighAccuracy:true,maximumAge:5000,timeout:12000}
+  );
+}
+async function tryIPGeo(){
+  try{
+    const r=await fetch('http://ip-api.com/json/?fields=status,lat,lon,city,regionName',
+      {signal:AbortSignal.timeout(6000)});
+    const d=await r.json();
+    if(d.status==='success'){
+      setPos(d.lat,d.lon);
+      setPill('pill-gps','warn',`🌐 ~${d.city}`);
+      setMsg('msg-gps','warn',`Ubicación por IP: ${d.city}, ${d.regionName} (~ciudad). Para precisión exacta sirve el archivo desde HTTPS.`);
+    }else setMsg('msg-gps','err','Sin GPS y sin ubicación por IP. Usa la pestaña Simulación.');
+  }catch{setMsg('msg-gps','err','Sin GPS ni internet. Usa la pestaña Simulación.');}
+}
+
+// ── Brújula ───────────────────────────────────────────────────────────────────
+function startCompass(){
+  let got=false;
+  const isBrave=!!(navigator.brave&&navigator.brave.isBrave);
+  const isChr=/Chrome/.test(navigator.userAgent)&&!/Edg/.test(navigator.userAgent);
+  const oriH=e=>{
+    let h=null;
+    if(e.webkitCompassHeading!=null) h=e.webkitCompassHeading;
+    else if(e.alpha!=null)           h=(360-e.alpha)%360;
+    if(h!==null&&!isNaN(h)){
+      uHead=h;got=true;
+      setPill('pill-cmp','on',`🧭 ${Math.round(h)}° ${gDir(h)}`);
+      setMsg('msg-cmp',null,'');upd();
+    }
+  };
+  const attach=()=>{
+    window.addEventListener('deviceorientationabsolute',oriH,true);
+    window.addEventListener('deviceorientation',oriH,true);
+    setPill('pill-cmp','warn','🧭 Esperando...');
+    setTimeout(()=>{
+      if(got)return;
+      setPill('pill-cmp','err','🧭 Sin datos');
+      const msg=isBrave
+        ?'<strong>Brave bloquea los sensores.</strong><br>Toca el 🦁 en la barra de dirección → <em>Protección de huella digital</em> → <strong>Permitir todo</strong> → Recarga la página.'
+        :isChr
+          ?'Chrome bloqueó el sensor de orientación.<br>Toca 🔒 en la barra → <em>Permisos del sitio → Sensores de movimiento → Permitir</em>.<br>Si no aparece, el archivo necesita HTTPS.'
+          :'Sin datos del giroscopio. Revisa los permisos de sensores en el navegador.';
+      setMsg('msg-cmp','warn',msg);
+    },5000);
+  };
+  if(typeof DeviceOrientationEvent!=='undefined'&&
+     typeof DeviceOrientationEvent.requestPermission==='function'){
+    DeviceOrientationEvent.requestPermission()
+      .then(p=>{
+        if(p==='granted') attach();
+        else{
+          setPill('pill-cmp','err','🧭 Denegada');
+          setMsg('msg-cmp','warn','Permisos denegados. Ve a <strong>Ajustes iOS → Privacidad → Movimiento y actividad</strong> y activa el acceso para Safari.');
+        }
+      })
+      .catch(()=>{
+        setPill('pill-cmp','err','🧭 Requiere HTTPS');
+        setMsg('msg-cmp','err','La brújula en iPhone requiere HTTPS. Sube el archivo a GitHub Pages.');
+      });
+  }else{
+    attach();
+  }
+}
+
+// ── Activar sensores ──────────────────────────────────────────────────────────
+function activateReal(){
+  const btn=document.getElementById('btn-act');
+  btn.disabled=true;btn.textContent='⏳';
+  startCompass(); // síncrono primero (requisito iOS)
+  startGPS();
+  btn.textContent='✓';btn.className='fab ok';
+}
+
+// ── Modo ──────────────────────────────────────────────────────────────────────
+function setMode(m){
+  mode=m;
+  document.getElementById('sec-real').style.display=m==='real'?'flex':'none';
+  document.getElementById('sec-sim').style.display=m==='sim'?'flex':'none';
+  document.getElementById('tab-real').className='tab'+(m==='real'?' on':'');
+  document.getElementById('tab-sim').className='tab'+(m==='sim'?' on':'');
+  upd();
+}
+function slMov(v){
+  uHead=parseInt(v);
+  document.getElementById('s-deg').textContent=`${uHead}° ${gDir(uHead)}`;
+  upd();
+}
+
+// ── Sonido ────────────────────────────────────────────────────────────────────
+function playNote(freq,delay,vol,dur){
+  if(!actx)return;
+  const t=actx.currentTime+delay;
+  const o1=actx.createOscillator(),o2=actx.createOscillator(),g=actx.createGain();
+  o1.connect(g);o2.connect(g);g.connect(actx.destination);
+  o1.type='sine';o2.type='sine';
+  o1.frequency.setValueAtTime(freq,t);o2.frequency.setValueAtTime(freq*2,t);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o1.start(t);o2.start(t);o1.stop(t+dur+0.02);o2.stop(t+dur+0.02);
+}
+function playBeep(h){
+  if(!actx||!sndOn)return;
+  if(actx.state==='suspended')actx.resume();
+  const freq=PENTA[Math.min(Math.floor(h*7),7)];
+  const vol=0.05+h*0.06,dur=0.12+h*0.28;
+  if(h>0.88){playNote(freq,0,vol,dur);playNote(freq*1.25,0.14,vol*0.8,dur*0.8);}
+  else playNote(freq,0,vol,dur);
+}
+function scheduleBeep(){
+  clearTimeout(beepTO);
+  if(!sndOn||!actx||tBearing===null)return;
+  const h=getH();
+  if(!h||h<0.04){beepTO=setTimeout(scheduleBeep,3000);return;}
+  playBeep(h);
+  beepTO=setTimeout(scheduleBeep,Math.round(120+(1-h)*1880));
+}
+function toggleSound(){
+  if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch{alert('Audio no soportado');return;}}
+  if(actx.state==='suspended')actx.resume();
+  sndOn=!sndOn;
+  ['snd-r','snd-s'].forEach(id=>{
+    const b=document.getElementById(id);
+    b.textContent=sndOn?'🔊':'🔇';
+    b.className=sndOn?'fab':'fab sec';
+  });
+  if(sndOn)scheduleBeep();else clearTimeout(beepTO);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderPresets();setMode('real');upd();
+</script>
+</body>
+</html>

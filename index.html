@@ -333,12 +333,7 @@ function startCompass(){
     setTimeout(()=>{
       if(got)return;
       setPill('pill-cmp','err','🧭 Sin datos');
-      setMsg('msg-cmp','warn',isBrave
-        ?'<strong>Brave bloquea los sensores.</strong><br>Toca 🦁 → <em>Protección de huella digital</em> → <strong>Permitir todo</strong> → Recarga.'
-        :isChr
-          ?'Toca 🔒 → <em>Permisos del sitio → Sensores de movimiento → Permitir</em>.<br>Si no aparece: el archivo necesita HTTPS.'
-          :'Sin datos del giroscopio. Revisa permisos de sensores en el navegador.');
-    },5000);
+          },5000);
   };
   if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
     DeviceOrientationEvent.requestPermission()
